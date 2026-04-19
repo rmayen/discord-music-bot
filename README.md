@@ -34,8 +34,8 @@ Built to learn how to integrate third-party APIs (Discord, audio streaming) into
 ### Setup
 1. Clone the repository:
    ```bash
-   git clone https://github.com/rmayen/Discord-bot.git
-   cd Discord-bot
+   git clone https://github.com/rmayen/discord-music-bot.git
+   cd discord-music-bot
    ```
 2. Open `SimpleBot.java` and replace `"YOUR_BOT_TOKEN"` with your actual Discord bot token.
 3. Add the required dependencies (JDA and LavaPlayer) to your build tool.
