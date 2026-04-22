@@ -20,16 +20,19 @@ Built to learn how to integrate third-party APIs (Discord, audio streaming) into
 ## Features
 
 - **Play music** - Load and play audio tracks from a URL using `!play <url>`
+- **Playlist support** - Loading a playlist URL queues the first track automatically
 - **Pause/Resume** - Toggle playback with `!pause`
-- **Skip tracks** - Skip the current track with `!skip`
-- **Queue system** - Tracks are queued and played in order using `!next`
+- **Skip tracks** - Skip the current track with `!skip` or `!next`
+- **Queue system** - Tracks are queued and played in order
 - **Identify track** - See what's currently playing with `!identify`
+- **Secure token handling** - Bot token is read from the `DISCORD_TOKEN` environment variable, not hardcoded
 
 ## How to Run
 
 ### Prerequisites
 - Java JDK 8 or higher
 - A Discord bot token ([Discord Developer Portal](https://discord.com/developers/applications))
+- JDA and LavaPlayer dependencies resolved through Maven, Gradle, or manually placed on the classpath
 
 ### Setup
 1. Clone the repository:
@@ -37,8 +40,15 @@ Built to learn how to integrate third-party APIs (Discord, audio streaming) into
    git clone https://github.com/rmayen/discord-music-bot.git
    cd discord-music-bot
    ```
-2. Open `SimpleBot.java` and replace `"YOUR_BOT_TOKEN"` with your actual Discord bot token.
-3. Add the required dependencies (JDA and LavaPlayer) to your build tool.
+2. Copy `.env.example` and export your bot token into your shell environment:
+   ```bash
+   export DISCORD_TOKEN=your_bot_token_here
+   ```
+   On Windows (PowerShell):
+   ```powershell
+   $env:DISCORD_TOKEN = "your_bot_token_here"
+   ```
+3. Add the required dependencies (JDA and LavaPlayer) to your build tool or classpath.
 4. Compile and run:
    ```bash
    javac SimpleBot.java
@@ -56,12 +66,23 @@ Built to learn how to integrate third-party APIs (Discord, audio streaming) into
 | `!next` | Plays the next queued track |
 | `!identify` | Displays the title of the currently playing track |
 
+## Project Structure
+
+```
+discord-music-bot/
+├── SimpleBot.java    # Main bot class, command routing, and embedded TrackScheduler
+├── .env.example      # Template for the DISCORD_TOKEN environment variable
+├── .gitignore        # Git ignore rules
+└── README.md
+```
+
 ## My Role
 
-I developed this bot as a personal project to explore the Discord API ecosystem in Java. I designed the command handler, implemented the track queue system using a `BlockingQueue`, and integrated LavaPlayer for audio streaming.
+I developed this bot as a personal project to explore the Discord API ecosystem in Java. I designed the command handler, implemented the track queue system using a `BlockingQueue`, handled playlist loading and load failures through the full `AudioLoadResultHandler` interface, and integrated LavaPlayer for audio streaming.
 
 ## Lessons Learned
 
 - Gained experience with event-driven architecture through JDA's `ListenerAdapter`
 - Learned how to manage concurrent audio playback using blocking queues
-- Understood how to structure a bot application with clean command routing
+- Understood how to implement every method of a third-party callback interface (`AudioLoadResultHandler`) to handle playlists, missing matches, and load failures
+- Practiced moving secrets out of source code and into environment variables
