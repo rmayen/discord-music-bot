@@ -1,4 +1,6 @@
 import com.sedmelluq.discord.lavaplayer.player.*;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
+import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -30,10 +32,8 @@ public class SimpleBot extends ListenerAdapter {
                 togglePause();
                 break;
             case "skip":
-                skip();
-                break;
             case "next":
-                nextTrack();
+                trackScheduler.nextTrack();
                 break;
             case "identify":
                 identify(event.getTextChannel());
@@ -48,24 +48,29 @@ public class SimpleBot extends ListenerAdapter {
                 channel.sendMessage("Adding to queue: " + track.getInfo().title).queue();
                 trackScheduler.queue(track);
             }
-            // Handle other methods if desired.
+
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist) {
+                AudioTrack firstTrack = playlist.getSelectedTrack();
+                if (firstTrack == null) firstTrack = playlist.getTracks().get(0);
+                channel.sendMessage("Adding playlist starting with: " + firstTrack.getInfo().title).queue();
+                trackScheduler.queue(firstTrack);
+            }
+
+            @Override
+            public void noMatches() {
+                channel.sendMessage("No track found for: " + url).queue();
+            }
+
+            @Override
+            public void loadFailed(FriendlyException exception) {
+                channel.sendMessage("Could not load track: " + exception.getMessage()).queue();
+            }
         });
     }
 
     private void togglePause() {
-        if (player.isPaused()) {
-            player.setPaused(false);
-        } else {
-            player.setPaused(true);
-        }
-    }
-
-    private void skip() {
-        trackScheduler.nextTrack();
-    }
-
-    private void nextTrack() {
-        trackScheduler.nextTrack();
+        player.setPaused(!player.isPaused());
     }
 
     private void identify(TextChannel textChannel) {
@@ -78,12 +83,19 @@ public class SimpleBot extends ListenerAdapter {
     }
 
     public static void main(String[] args) throws Exception {
-        JDABuilder.createDefault("YOUR_BOT_TOKEN")
+        String token = System.getenv("DISCORD_TOKEN");
+        if (token == null || token.isEmpty()) {
+            System.err.println("Error: DISCORD_TOKEN environment variable is not set.");
+            System.err.println("Set it before running (see README and .env.example for details).");
+            System.exit(1);
+        }
+
+        JDABuilder.createDefault(token)
             .addEventListeners(new SimpleBot())
             .build();
     }
 
-    private class TrackScheduler implements AudioLoadResultHandler {
+    private static class TrackScheduler {
         private final AudioPlayer player;
         private final BlockingQueue<AudioTrack> queue;
 
